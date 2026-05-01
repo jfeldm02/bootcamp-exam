@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Justin's Math in AI Bootcamp — ML Visualization Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>:root {
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --surface3: #232f47;
+  --border: #243048;
+  --border-strong: #364569;
+  --accent: #4ecca3;
+  --accent2: #f0a500;
+  --text: #e8edf5;
+  --text-muted: #7a8ba8;
+  --text-dim: #5a6b88;
+  --la: #6366f1; --la-light: #a5b4fc; --la-bg: rgba(99,102,241,0.12);
+  --calc: #ec4899; --calc-light: #f9a8d4; --calc-bg: rgba(236,72,153,0.12);
+  --prob: #f59e0b; --prob-light: #fcd34d; --prob-bg: rgba(245,158,11,0.12);
+  --stat: #14b8a6; --stat-light: #5eead4; --stat-bg: rgba(20,184,166,0.12);
+  --correct: #22c55e; --wrong: #ef4444;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+body { overflow-x: hidden; }
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 72% 8%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 33% 55%, rgba(255,255,255,0.25) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 40%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 5% 90%, rgba(255,255,255,0.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 95% 70%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 30%, rgba(255,255,255,0.2) 0%, transparent 100%);
+}
+#app { position: relative; z-index: 1; max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+
+/* HEADER */
+header { text-align: center; margin-bottom: 2.5rem; padding-top: 1rem; }
+.eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--accent2); letter-spacing: 0.18em; margin-bottom: 1rem; }
+h1 { font-family: 'DM Serif Display', serif; font-size: clamp(2rem, 4.5vw, 3.6rem); line-height: 1.05; font-weight: 400; margin-bottom: 0.6rem; }
+h1 em { font-style: italic; color: var(--accent); }
+.subtitle { font-family: 'DM Serif Display', serif; font-style: italic; font-size: 1.05rem; color: var(--text-muted); margin-bottom: 1.4rem; }
+.intro { max-width: 640px; margin: 0 auto; font-size: 0.92rem; color: var(--text-muted); line-height: 1.7; }
+
+/* TABS */
+nav.tabs {
+  display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: center;
+  margin: 2rem 0 2.5rem; padding: 0.5rem;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  position: sticky; top: 1rem; z-index: 10; backdrop-filter: blur(8px);
+}
+.tab-btn { display: flex; align-items: center; gap: 0.55rem; padding: 0.65rem 1.1rem; background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer; color: var(--text-muted); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; white-space: nowrap; }
+.tab-btn:hover { color: var(--text); background: var(--surface2); }
+.tab-btn.active { background: var(--surface3); color: var(--text); border-color: var(--border-strong); }
+.tab-btn .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.tab-btn .num { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--text-dim); margin-right: 0.1rem; }
+.tab-btn.active .num { color: var(--accent2); }
+
+/* PANELS */
+.panel { display: none; animation: fadeIn 0.4s ease; }
+.panel.active { display: block; }
+@keyframes fadeIn { from {opacity:0; transform: translateY(8px);} to {opacity:1; transform:none;} }
+.panel-header { display: flex; align-items: baseline; gap: 1rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+.panel-num { font-family: 'DM Serif Display', serif; font-size: 2.6rem; line-height: 1; opacity: 0.2; user-select: none; }
+.panel-title { font-family: 'DM Serif Display', serif; font-size: 1.7rem; line-height: 1.2; font-weight: 400; }
+.panel-tag { padding: 0.3rem 0.8rem; border-radius: 4px; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; letter-spacing: 0.06em; font-weight: 500; }
+.tag-la   { background: var(--la-bg);   color: var(--la-light);   border: 1px solid rgba(99,102,241,0.3); }
+.tag-calc { background: var(--calc-bg); color: var(--calc-light); border: 1px solid rgba(236,72,153,0.3); }
+.tag-prob { background: var(--prob-bg); color: var(--prob-light); border: 1px solid rgba(245,158,11,0.3); }
+.tag-stat { background: var(--stat-bg); color: var(--stat-light); border: 1px solid rgba(20,184,166,0.3); }
+.tag-nn   { background: rgba(78,204,163,0.12); color: var(--accent); border: 1px solid rgba(78,204,163,0.3); }
+.panel-desc { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 2rem; max-width: 720px; }
+
+/* COMMON */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.3rem; }
+.card-title { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.1em; margin-bottom: 0.9rem; text-transform: uppercase; }
+.row { display: flex; gap: 1rem; flex-wrap: wrap; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+.ctl-group { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.ctl-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.05em; display: flex; justify-content: space-between; align-items: center; }
+.ctl-label .val { color: var(--accent2); font-weight: 500; }
+.select, .num-input-x { background: var(--surface2); border: 1px solid var(--border); border-radius: 5px; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; padding: 0.55rem 0.75rem; outline: none; transition: border-color 0.15s; appearance: none; cursor: pointer; }
+.select { background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237a8ba8' fill='none' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.7rem center; padding-right: 2rem; }
+.select:focus, .num-input-x:focus { border-color: var(--accent); }
+.num-input-x { width: 90px; text-align: center; cursor: text; }
+.btn { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 5px; font-family: 'DM Sans', sans-serif; font-size: 0.85rem; padding: 0.55rem 1.2rem; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.btn:hover:not(:disabled) { background: var(--accent); color: var(--bg); }
+.btn:disabled { opacity: 0.4; cursor: default; border-color: var(--border); color: var(--text-dim); }
+.btn-secondary { border-color: var(--border-strong); color: var(--text); }
+.btn-secondary:hover:not(:disabled) { background: var(--surface3); color: var(--text); }
+.btn-orange { border-color: var(--accent2); color: var(--accent2); }
+.btn-orange:hover:not(:disabled) { background: var(--accent2); color: var(--bg); }
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; background: var(--border); border-radius: 2px; outline: none; cursor: pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; transition: transform 0.1s; border: 2px solid var(--bg); }
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; background: var(--accent); border-radius: 50%; cursor: pointer; border: 2px solid var(--bg); }
+
+/* LINEAR ALGEBRA */
+.la-stage { display: flex; align-items: center; justify-content: center; gap: 1.2rem; flex-wrap: wrap; padding: 1.5rem 0; min-height: 200px; }
+.la-operand { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+.la-op-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.06em; }
+.matrix-display { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1rem; display: inline-block; }
+.matrix-display.is-result { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(78,204,163,0.2); }
+.matrix-display.is-error { border-color: var(--wrong); }
+.matrix-bracket { display: inline-flex; align-items: stretch; gap: 0.3rem; }
+.matrix-bracket::before, .matrix-bracket::after { content: ''; width: 7px; border: 1.5px solid var(--text); align-self: stretch; }
+.matrix-bracket::before { border-right: 0; }
+.matrix-bracket::after { border-left: 0; }
+.matrix-grid { display: grid; gap: 0.3rem 0.85rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem; color: var(--accent2); padding: 0.2rem 0.4rem; }
+.matrix-grid > span { text-align: right; min-width: 1.6em; }
+.matrix-shape { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--text-dim); margin-top: 0.2rem; }
+.la-symbol { font-family: 'DM Serif Display', serif; font-size: 2.4rem; color: var(--la-light); line-height: 1; opacity: 0.85; }
+.la-error-msg { padding: 1rem 1.4rem; color: #fca5a5; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; text-align: center; line-height: 1.7; max-width: 480px; }
+.la-explain { margin-top: 1.5rem; padding: 1.1rem 1.3rem; background: var(--la-bg); border-left: 3px solid var(--la); border-radius: 4px; font-size: 0.86rem; line-height: 1.75; color: var(--la-light); font-family: 'IBM Plex Mono', monospace; display: none; }
+.la-explain.show { display: block; }
+.la-explain .step { color: var(--text); margin-top: 0.3rem; }
+.la-explain .em { color: var(--text); font-weight: 500; }
+
+/* GRADIENT DESCENT */
+.gd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 900px) { .gd-grid { grid-template-columns: 1fr; } }
+.gd-svg { width: 100%; height: auto; display: block; background: var(--surface2); border-radius: 6px; }
+.gd-stat-row { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.8rem; padding: 0.5rem 0.2rem; }
+.gd-stat { font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; }
+.gd-stat .lbl { color: var(--text-muted); font-size: 0.7rem; display: block; margin-bottom: 0.2rem; }
+.gd-stat .v { color: var(--calc-light); font-weight: 500; }
+.gd-stat .v.acc { color: var(--accent); }
+.gd-stat .v.warn { color: var(--accent2); }
+
+/* BAYES */
+.bayes-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 1.2rem; }
+@media (max-width: 900px) { .bayes-grid { grid-template-columns: 1fr; } }
+.bayes-svg { width: 100%; height: auto; display: block; background: var(--surface2); border-radius: 6px; }
+.bayes-formula { font-family: 'IBM Plex Mono', monospace; font-size: 0.92rem; text-align: center; padding: 1rem; background: var(--prob-bg); border: 1px solid rgba(245,158,11,0.25); border-radius: 6px; margin-bottom: 1rem; line-height: 1.6; }
+.bayes-formula .frac { display: inline-block; vertical-align: middle; text-align: center; margin: 0 0.3rem; }
+.bayes-formula .num, .bayes-formula .den { display: block; padding: 0.15rem 0.5rem; }
+.bayes-formula .num { border-bottom: 1.5px solid var(--prob-light); color: var(--prob-light); }
+.bayes-formula .den { color: var(--text); }
+.bayes-formula .res { display: block; margin-top: 0.7rem; font-size: 1.4rem; color: var(--accent); font-weight: 500; }
+.bayes-highlight-btns { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 1rem; }
+.bayes-hl-btn { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
+.bayes-hl-btn:hover { border-color: var(--prob); }
+.bayes-hl-btn.active { background: var(--prob-bg); border-color: var(--prob); color: var(--prob-light); }
+.bayes-hl-btn .desc { font-size: 0.7rem; color: var(--text-dim); margin-top: 0.2rem; display: block; }
+.bayes-hl-btn.active .desc { color: var(--prob-light); opacity: 0.85; }
+
+/* DISTRIBUTIONS */
+.dist-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.2rem; }
+@media (max-width: 900px) { .dist-grid { grid-template-columns: 1fr; } }
+.dist-svg { width: 100%; height: auto; display: block; background: var(--surface2); border-radius: 6px; }
+.dist-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-top: 0.9rem; }
+.dist-stat-cell { background: var(--surface2); padding: 0.7rem 0.9rem; border-radius: 6px; border: 1px solid var(--border); }
+.dist-stat-cell.pop { border-color: rgba(20,184,166,0.4); }
+.dist-stat-cell.smp { border-color: rgba(240,165,0,0.4); }
+.dist-stat-cell .lbl { font-family: 'IBM Plex Mono', monospace; font-size: 0.66rem; color: var(--text-dim); letter-spacing: 0.06em; text-transform: uppercase; }
+.dist-stat-cell .v { font-family: 'IBM Plex Mono', monospace; font-size: 1.05rem; color: var(--text); margin-top: 0.25rem; }
+.dist-stat-cell.pop .v { color: var(--stat-light); }
+.dist-stat-cell.smp .v { color: var(--accent2); }
+.dist-stat-cell .sub { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+/* NEURAL NETWORK */
+.nn-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 1rem; }
+@media (max-width: 1000px) { .nn-grid { grid-template-columns: 1fr; } }
+.nn-svg { width: 100%; height: auto; display: block; background: var(--surface2); border-radius: 6px; }
+.nn-equation { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; padding: 0.9rem 1.1rem; background: var(--surface2); border-radius: 6px; border: 1px solid var(--border); line-height: 1.9; color: var(--accent); overflow-x: auto; white-space: nowrap; }
+.nn-equation .var { color: var(--accent2); }
+.nn-equation .op { color: var(--text-muted); }
+.nn-equation .lbl { color: var(--text-muted); font-style: italic; font-size: 0.7rem; display: block; margin-bottom: 0.3rem; }
+.confusion-matrix { display: grid; grid-template-columns: auto repeat(3, 1fr); gap: 2px; font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; margin-top: 0.5rem; }
+.cm-cell { padding: 0.5rem; text-align: center; background: var(--surface2); border-radius: 3px; }
+.cm-cell.head { background: transparent; color: var(--text-muted); font-size: 0.72rem; }
+.cm-cell.diag { background: rgba(78,204,163,0.18); color: var(--accent); font-weight: 500; }
+.cm-cell.off  { background: var(--surface2); color: var(--text-muted); }
+.cm-axis-label { text-align: center; font-size: 0.7rem; color: var(--text-dim); margin: 0.3rem 0; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.06em; }
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(78,204,163,0.2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 0.5rem; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--text-dim); line-height: 1.8; }
+footer .accent { color: var(--accent); }
+footer a { color: var(--accent2); text-decoration: none; }
+
+.legend { display: flex; gap: 0.9rem; flex-wrap: wrap; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; color: var(--text-muted); margin-top: 0.6rem; }
+.legend-item { display: flex; align-items: center; gap: 0.35rem; }
+.legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.hint-box { background: var(--surface2); border: 1px solid var(--border); border-left: 3px solid var(--accent2); border-radius: 4px; padding: 0.85rem 1.1rem; font-size: 0.82rem; color: var(--text-muted); line-height: 1.65; }
+.hint-box .em { color: var(--text); }
+.hint-box code { background: rgba(99,102,241,0.15); color: var(--la-light); padding: 0.1rem 0.4rem; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 0.85em; }
+
+.kbd { display: inline-block; padding: 0.1rem 0.45rem; background: var(--surface3); border: 1px solid var(--border-strong); border-radius: 3px; font-family: 'IBM Plex Mono', monospace; font-size: 0.78em; color: var(--text); }
+
+.controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem 1.2rem; }
+.controls-grid > .ctl-group { min-width: 0; }
+
+.acc-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.7rem; border-radius: 999px; background: rgba(78,204,163,0.12); color: var(--accent); font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; border: 1px solid rgba(78,204,163,0.3); }
+.warn-pill { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.7rem; border-radius: 999px; background: rgba(240,165,0,0.12); color: var(--accent2); font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; border: 1px solid rgba(240,165,0,0.3); }
+</style>
+</head>
+<body>
+<div id="app"><header>
+  <div class="eyebrow">JUSTIN'S MATH IN AI BOOTCAMP &middot; ML VISUALIZATION DEMO</div>
+  <h1>Math, in <em>Motion</em>.</h1>
+  <div class="subtitle">an interactive walkthrough of every topic from the bootcamp</div>
+  <p class="intro">
+    Five sandboxes &mdash; one for each thread of mathematics we covered, plus a small neural net that
+    weaves them all together. Tweak parameters, watch the math respond, and build an intuition
+    for what's happening underneath every modern ML model.
+  </p>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button class="tab-btn active" data-target="la"><span class="dot" style="background:var(--la)"></span><span class="num">01</span>Linear Algebra</button>
+  <button class="tab-btn" data-target="gd"><span class="dot" style="background:var(--calc)"></span><span class="num">02</span>Gradient Descent</button>
+  <button class="tab-btn" data-target="bayes"><span class="dot" style="background:var(--prob)"></span><span class="num">03</span>Bayes' Theorem</button>
+  <button class="tab-btn" data-target="dist"><span class="dot" style="background:var(--stat)"></span><span class="num">04</span>Sampling</button>
+  <button class="tab-btn" data-target="nn"><span class="dot" style="background:var(--accent)"></span><span class="num">05</span>Neural Network</button>
+</nav>
+
+<!-- ═══ PANEL 1: LINEAR ALGEBRA ═══ -->
+<section class="panel active" id="panel-la">
+  <div class="panel-header">
+    <span class="panel-num">01</span>
+    <h2 class="panel-title">Linear Algebra Playground</h2>
+    <span class="panel-tag tag-la">Lecture 2</span>
+  </div>
+  <p class="panel-desc">
+    Pick two preset matrices or vectors, choose an operation, and see the result computed step-by-step.
+    If the shapes don't line up &mdash; say, you try to multiply a 2&times;3 by a 2&times;2 &mdash; the playground
+    will tell you why and what would need to change.
+  </p>
+
+  <div class="card" style="margin-bottom: 1rem;">
+    <div class="card-title">Operation Builder</div>
+    <div class="row" style="align-items:flex-end;">
+      <div class="ctl-group" style="flex:1; min-width:160px;">
+        <label class="ctl-label">Operand 1</label>
+        <select class="select" id="la-op1"></select>
+      </div>
+      <div class="ctl-group" style="flex:1; min-width:160px;">
+        <label class="ctl-label">Operation</label>
+        <select class="select" id="la-operation">
+          <option value="add">A + B &nbsp; (add)</option>
+          <option value="sub">A &minus; B &nbsp; (subtract)</option>
+          <option value="mul">A &middot; B &nbsp; (matrix multiply)</option>
+          <option value="dot">x &middot; y &nbsp; (dot product, vectors)</option>
+          <option value="trans">Aᵀ &nbsp; (transpose)</option>
+        </select>
+      </div>
+      <div class="ctl-group" style="flex:1; min-width:160px;">
+        <label class="ctl-label">Operand 2 <span class="val" id="la-op2-state"></span></label>
+        <select class="select" id="la-op2"></select>
+      </div>
+      <button class="btn" id="la-compute">Compute &rarr;</button>
+    </div>
+    <div class="hint-box" style="margin-top: 1.2rem;">
+      <span class="em">Try this:</span> multiply <code>A_2x3</code> with <code>B_3x2</code> &mdash; works.
+      Then try <code>A_2x3</code> with <code>C_2x2</code> &mdash; you'll get an error explaining the
+      inner-dimension rule.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Result</div>
+    <div class="la-stage" id="la-stage"></div>
+    <div class="la-explain" id="la-explain"></div>
+  </div>
+</section>
+
+<!-- ═══ PANEL 2: GRADIENT DESCENT ═══ -->
+<section class="panel" id="panel-gd">
+  <div class="panel-header">
+    <span class="panel-num">02</span>
+    <h2 class="panel-title">Gradient Descent on a Decision Line</h2>
+    <span class="panel-tag tag-calc">Lecture 3</span>
+  </div>
+  <p class="panel-desc">
+    Two clouds of points, one decision line, one loss surface.
+    Watch the model nudge its weights downhill toward the minimum &mdash; and crank the learning rate
+    up to see what happens when the steps get too aggressive.
+  </p>
+
+  <div class="card" style="margin-bottom: 1rem;">
+    <div class="card-title">Hyperparameters</div>
+    <div class="controls-grid">
+      <div class="ctl-group">
+        <label class="ctl-label">Learning rate &alpha; <span class="val" id="gd-lr-val">0.10</span></label>
+        <input type="range" id="gd-lr" min="-3" max="0.3" step="0.05" value="-1">
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">Dataset spread <span class="val" id="gd-spread-val">0.8</span></label>
+        <input type="range" id="gd-spread" min="0.3" max="1.6" step="0.1" value="0.8">
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">Epoch <span class="val" id="gd-epoch">0</span></label>
+        <div class="row">
+          <button class="btn btn-secondary" id="gd-step">Step</button>
+          <button class="btn" id="gd-play">▶ Play</button>
+          <button class="btn btn-secondary" id="gd-reset">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gd-grid">
+    <div class="card">
+      <div class="card-title">Decision Line on Data</div>
+      <svg class="gd-svg" id="gd-scatter" viewBox="0 0 400 320"></svg>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#5eead4"></div>Class 0</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fcd34d"></div>Class 1</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4ecca3"></div>Decision boundary</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Loss &amp; Update Step</div>
+      <svg class="gd-svg" id="gd-loss" viewBox="0 0 400 320"></svg>
+      <div class="gd-stat-row">
+        <div class="gd-stat"><span class="lbl">Loss ℒ(θ)</span><span class="v" id="gd-stat-loss">—</span></div>
+        <div class="gd-stat"><span class="lbl">‖&nabla;ℒ‖</span><span class="v" id="gd-stat-grad">—</span></div>
+        <div class="gd-stat"><span class="lbl">Accuracy</span><span class="v acc" id="gd-stat-acc">—</span></div>
+        <div class="gd-stat"><span class="lbl">Status</span><span class="v" id="gd-stat-status">idle</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hint-box" style="margin-top:1rem;">
+    <span class="em">What's happening:</span> we're minimizing logistic loss <code>ℒ(θ) = &minus;mean[y log σ(z) + (1&minus;y) log(1&minus;σ(z))]</code>
+    where <code>z = w₁x + w₂y + b</code>. Each step computes the gradient and updates θ &larr; θ &minus; α&middot;&nabla;ℒ.
+    Try &alpha; = 0.001 (slow), &alpha; = 0.5 (fast), and &alpha; = 2.0 (oscillates / diverges).
+  </div>
+</section>
+
+<!-- ═══ PANEL 3: BAYES' THEOREM ═══ -->
+<section class="panel" id="panel-bayes">
+  <div class="panel-header">
+    <span class="panel-num">03</span>
+    <h2 class="panel-title">Bayes' Theorem &mdash; Meet Steve</h2>
+    <span class="panel-tag tag-prob">Lecture 4</span>
+  </div>
+  <p class="panel-desc">
+    Steve is shy and tidy. Is he more likely to be a librarian or a farmer?
+    The slide showed why intuition fails &mdash; the prior crushes the evidence. Adjust the priors
+    and the descriptions, and click any term in Bayes' formula to highlight what part of the
+    population it represents.
+  </p>
+
+  <div class="card" style="margin-bottom: 1rem;">
+    <div class="card-title">Setup</div>
+    <div class="controls-grid">
+      <div class="ctl-group">
+        <label class="ctl-label">Farmers : Librarians ratio <span class="val" id="bayes-ratio-val">20 : 1</span></label>
+        <input type="range" id="bayes-ratio" min="1" max="40" step="1" value="20">
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">% of librarians fitting Steve <span class="val" id="bayes-pl-val">40%</span></label>
+        <input type="range" id="bayes-pl" min="0" max="100" step="5" value="40">
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">% of farmers fitting Steve <span class="val" id="bayes-pf-val">10%</span></label>
+        <input type="range" id="bayes-pf" min="0" max="100" step="5" value="10">
+      </div>
+    </div>
+  </div>
+
+  <div class="bayes-grid">
+    <div class="card">
+      <div class="card-title">Population (the visual from class)</div>
+      <svg class="bayes-svg" id="bayes-svg" viewBox="0 0 600 320"></svg>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#a5b4fc"></div>Librarian</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#5eead4"></div>Farmer</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fcd34d"></div>Fits Steve's description</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">P(Librarian | Steve) — Bayes' Formula</div>
+      <div class="bayes-formula" id="bayes-formula"></div>
+
+      <div class="card-title" style="margin-top:1.2rem;">Highlight a term</div>
+      <div class="bayes-highlight-btns" id="bayes-hl">
+        <button class="bayes-hl-btn" data-hl="all">Whole population<span class="desc">Everyone, before any evidence</span></button>
+        <button class="bayes-hl-btn" data-hl="L">P(L) &middot; P(Steve|L)<span class="desc">Librarians who fit the description</span></button>
+        <button class="bayes-hl-btn" data-hl="F">P(F) &middot; P(Steve|F)<span class="desc">Farmers who fit the description (the false positives that crush us)</span></button>
+        <button class="bayes-hl-btn active" data-hl="post">P(L | Steve)<span class="desc">Of all who fit, what fraction are librarians?</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PANEL 4: SAMPLING & DISTRIBUTIONS ═══ -->
+<section class="panel" id="panel-dist">
+  <div class="panel-header">
+    <span class="panel-num">04</span>
+    <h2 class="panel-title">Sampling from Distributions</h2>
+    <span class="panel-tag tag-stat">Lecture 5</span>
+  </div>
+  <p class="panel-desc">
+    Pick a distribution, draw N samples from it, and watch how closely the <em>sample</em> mean and
+    median match the true population mean and median. Small samples wiggle a lot. Big samples settle
+    in. This is the law of large numbers, live.
+  </p>
+
+  <div class="card" style="margin-bottom: 1rem;">
+    <div class="card-title">Distribution &amp; Sample Settings</div>
+    <div class="controls-grid">
+      <div class="ctl-group">
+        <label class="ctl-label">Distribution</label>
+        <select class="select" id="dist-type">
+          <option value="normal">Normal &nbsp; (μ, σ)</option>
+          <option value="uniform">Uniform &nbsp; (a, b)</option>
+          <option value="exponential">Exponential &nbsp; (λ)</option>
+        </select>
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">Param 1 <span class="val" id="dist-p1-val">0</span></label>
+        <input type="range" id="dist-p1" min="-2" max="2" step="0.1" value="0">
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">Param 2 <span class="val" id="dist-p2-val">1</span></label>
+        <input type="range" id="dist-p2" min="0.1" max="3" step="0.1" value="1">
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">Number of samples N <span class="val" id="dist-n-val">100</span></label>
+        <input type="range" id="dist-n" min="5" max="2000" step="5" value="100">
+      </div>
+      <div class="ctl-group" style="justify-content:flex-end;">
+        <label class="ctl-label">&nbsp;</label>
+        <button class="btn" id="dist-resample">↻ Resample</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dist-grid">
+    <div class="card">
+      <div class="card-title">PDF (curve) vs Sample (bars)</div>
+      <svg class="dist-svg" id="dist-svg" viewBox="0 0 600 340"></svg>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#5eead4"></div>True PDF (population)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f0a500"></div>Sample histogram</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a5b4fc"></div>Population mean</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fcd34d"></div>Sample mean</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Compare</div>
+      <div class="dist-stats">
+        <div class="dist-stat-cell pop">
+          <div class="lbl">Population μ</div>
+          <div class="v" id="dist-pop-mean">—</div>
+          <div class="sub">true mean of distribution</div>
+        </div>
+        <div class="dist-stat-cell smp">
+          <div class="lbl">Sample mean</div>
+          <div class="v" id="dist-smp-mean">—</div>
+          <div class="sub" id="dist-smp-mean-diff">—</div>
+        </div>
+        <div class="dist-stat-cell pop">
+          <div class="lbl">Population median</div>
+          <div class="v" id="dist-pop-med">—</div>
+          <div class="sub">true median of distribution</div>
+        </div>
+        <div class="dist-stat-cell smp">
+          <div class="lbl">Sample median</div>
+          <div class="v" id="dist-smp-med">—</div>
+          <div class="sub" id="dist-smp-med-diff">—</div>
+        </div>
+      </div>
+      <div class="hint-box" style="margin-top: 1rem;">
+        <span class="em">Try this:</span> set N = 5 and resample a few times — see the wild swings.
+        Then crank N to 2000 — the sample stats lock onto the true values. That's why bigger
+        datasets give better estimates.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PANEL 5: NEURAL NETWORK ═══ -->
+<section class="panel" id="panel-nn">
+  <div class="panel-header">
+    <span class="panel-num">05</span>
+    <h2 class="panel-title">Neural Network &mdash; All the Math, Together</h2>
+    <span class="panel-tag tag-nn">Capstone</span>
+  </div>
+  <p class="panel-desc">
+    Three intertwined spirals. One small neural network. The dataset is non-linear &mdash;
+    no straight line will ever separate it &mdash; but stack two layers of weighted sums with a non-linear
+    activation in between, and the network learns a curved decision boundary. It's still just
+    matrix multiplies (Lec 2), gradient descent (Lec 3), and probability outputs (Lec 4).
+  </p>
+
+  <div class="card" style="margin-bottom: 1rem;">
+    <div class="card-title">Network &amp; Training Settings</div>
+    <div class="controls-grid">
+      <div class="ctl-group">
+        <label class="ctl-label">Hidden layer size <span class="val" id="nn-h-val">12</span></label>
+        <input type="range" id="nn-h" min="2" max="24" step="1" value="12">
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">Activation</label>
+        <select class="select" id="nn-act">
+          <option value="tanh">tanh</option>
+          <option value="relu">ReLU</option>
+          <option value="sigmoid">sigmoid</option>
+        </select>
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">Learning rate <span class="val" id="nn-lr-val">0.10</span></label>
+        <input type="range" id="nn-lr" min="-3" max="0" step="0.05" value="-1">
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">Epochs <span class="val" id="nn-epochs-val">600</span></label>
+        <input type="range" id="nn-epochs" min="50" max="2000" step="50" value="600">
+      </div>
+      <div class="ctl-group">
+        <label class="ctl-label">Dataset</label>
+        <select class="select" id="nn-data">
+          <option value="spiral">3-spiral (hard)</option>
+          <option value="blobs">3-blob (easy)</option>
+          <option value="moons">3-moon (medium)</option>
+        </select>
+      </div>
+      <div class="ctl-group" style="justify-content:flex-end;">
+        <label class="ctl-label">&nbsp;</label>
+        <div class="row">
+          <button class="btn" id="nn-train">▶ Train</button>
+          <button class="btn btn-secondary" id="nn-reset">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nn-grid">
+    <div class="card">
+      <div class="card-title">Decision Boundary &amp; Data</div>
+      <svg class="nn-svg" id="nn-decision" viewBox="0 0 400 400"></svg>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#ec4899"></div>Class 0 (train)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#14b8a6"></div>Class 1 (train)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Class 2 (train)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fff;border:1.5px solid #fff"></div>Test point</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Train &amp; Test Loss</div>
+      <svg class="nn-svg" id="nn-losses" viewBox="0 0 400 280"></svg>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#4ecca3"></div>Train loss</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f0a500"></div>Test loss</div>
+      </div>
+      <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <span class="acc-pill"><span id="nn-train-acc">Train: —</span></span>
+        <span class="warn-pill"><span id="nn-test-acc">Test: —</span></span>
+        <span class="acc-pill" style="background:rgba(99,102,241,0.12);color:var(--la-light);border-color:rgba(99,102,241,0.3)"><span id="nn-epoch-shown">Epoch: 0</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top: 1rem;">
+    <div class="card">
+      <div class="card-title">Network Architecture</div>
+      <svg class="nn-svg" id="nn-arch" viewBox="0 0 400 220" style="background:transparent;"></svg>
+      <div class="cm-axis-label" id="nn-arch-info">2 inputs &rarr; 12 hidden (tanh) &rarr; 3 classes (softmax)</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Confusion Matrix (test set)</div>
+      <div class="cm-axis-label">predicted &darr;&nbsp;&nbsp;actual &rarr;</div>
+      <div class="confusion-matrix" id="nn-cm"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 1rem;">
+    <div class="card-title">The Network as an Equation</div>
+    <span class="lbl" style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--text-muted);display:block;margin-bottom:0.5rem;">A neural network is, at its core, a stacked composition of "weighted sum + non-linear bend":</span>
+    <div class="nn-equation">
+      <span class="op">ŷ</span> <span class="op">=</span> <span class="var">softmax</span><span class="op">(</span> <span class="var">W₂</span> <span class="op">·</span> <span class="var">σ</span><span class="op">(</span> <span class="var">W₁</span> <span class="op">·</span> <span class="var">x</span> <span class="op">+</span> <span class="var">b₁</span> <span class="op">)</span> <span class="op">+</span> <span class="var">b₂</span> <span class="op">)</span>
+    </div>
+    <div class="hint-box" style="margin-top: 0.8rem;">
+      <span class="em">Each piece, mapped back to the bootcamp:</span><br>
+      <code>W₁&middot;x + b₁</code> &mdash; matrix-vector multiply (Lec 2). It's still <code>ax + b = 0</code>, just in higher dimensions.<br>
+      <code>σ(&middot;)</code> &mdash; the activation function bends the line into a curve.<br>
+      <code>softmax(&middot;)</code> &mdash; turns scores into probabilities (Lec 4).<br>
+      <code>θ &larr; θ &minus; α&middot;&nabla;ℒ</code> &mdash; gradient descent updates every weight (Lec 3).<br>
+      <code>train/test split</code> &mdash; estimating generalization (Lec 5).
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>Justin's Math in AI Bootcamp &middot; Northeastern AI Club &middot; <span class="accent">Math, in motion.</span></div>
+  <div style="margin-top:0.4rem">All five sandboxes run locally in your browser — no servers, no telemetry. Refresh to reset everything.</div>
+</footer>
+</div>
+<script>(function(){
+/* === script_part1.js === */
+/* ════════════════════════════════════════════════════
+   SHARED UTILITIES
+   ════════════════════════════════════════════════════ */
+const $ = (id) => document.getElementById(id);
+const $$ = (sel, parent = document) => parent.querySelectorAll(sel);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmt = (v, d = 2) => Number.isFinite(v) ? v.toFixed(d) : '—';
+const lerp = (a, b, t) => a + (b - a) * t;
+
+// Seedable PRNG for reproducible datasets
+function mulberry32(seed) {
+  return function() {
+    let t = (seed += 0x6D2B79F5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function randn(rng) {
+  // Box-Muller
+  let u = 0, v = 0;
+  while (u === 0) u = rng();
+  while (v === 0) v = rng();
+  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+}
+
+// SVG namespace helper
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svg(tag, attrs = {}) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function clearSVG(el) { while (el.firstChild) el.removeChild(el.firstChild); }
+
+/* ════════════════════════════════════════════════════
+   TAB SWITCHING
+   ════════════════════════════════════════════════════ */
+$$('#tabs .tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.target;
+    $$('#tabs .tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+    $$('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + target));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+/* ════════════════════════════════════════════════════
+   PANEL 1: LINEAR ALGEBRA PLAYGROUND
+   ════════════════════════════════════════════════════ */
+const LA_OBJECTS = {
+  'A_2x3':  { name: 'A',  kind: 'matrix', shape: [2, 3], data: [[1, 2, 3], [4, 5, 6]],     desc: 'feature batch (2 samples × 3 features)' },
+  'B_3x2':  { name: 'B',  kind: 'matrix', shape: [3, 2], data: [[2, 0], [1, 3], [0, 1]],   desc: 'weight matrix (3 inputs → 2 outputs)' },
+  'C_2x2':  { name: 'C',  kind: 'matrix', shape: [2, 2], data: [[1, 2], [3, 4]],            desc: 'square 2×2 matrix' },
+  'D_2x2':  { name: 'D',  kind: 'matrix', shape: [2, 2], data: [[5, 1], [0, 2]],            desc: 'another 2×2 (good for A+B-style ops)' },
+  'I_3x3':  { name: 'I',  kind: 'matrix', shape: [3, 3], data: [[1,0,0],[0,1,0],[0,0,1]],   desc: 'identity matrix' },
+  'u_3':    { name: 'u',  kind: 'vector', shape: [3, 1], data: [[1], [2], [3]],             desc: '3-vector (e.g. one row of A)' },
+  'v_3':    { name: 'v',  kind: 'vector', shape: [3, 1], data: [[4], [5], [6]],             desc: '3-vector' },
+  'w_2':    { name: 'w',  kind: 'vector', shape: [2, 1], data: [[10], [20]],                desc: '2-vector (different size)' },
+  '∅':      { name: '—',  kind: 'none' },
+};
+const LA_KEYS = Object.keys(LA_OBJECTS).filter(k => k !== '∅');
+
+function laFormatMatrix(data, isError = false, isResult = false, label = null) {
+  const wrap = document.createElement('div');
+  wrap.className = 'matrix-display' + (isError ? ' is-error' : '') + (isResult ? ' is-result' : '');
+  if (Array.isArray(data) && data.length && Array.isArray(data[0])) {
+    const rows = data.length, cols = data[0].length;
+    const bracket = document.createElement('div');
+    bracket.className = 'matrix-bracket';
+    const grid = document.createElement('div');
+    grid.className = 'matrix-grid';
+    grid.style.gridTemplateColumns = `repeat(${cols}, auto)`;
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        const cell = document.createElement('span');
+        const v = data[i][j];
+        cell.textContent = Number.isInteger(v) ? v : v.toFixed(2);
+        grid.appendChild(cell);
+      }
+    }
+    bracket.appendChild(grid);
+    wrap.appendChild(bracket);
+    if (label) {
+      const sh = document.createElement('div');
+      sh.className = 'matrix-shape';
+      sh.textContent = label;
+      wrap.appendChild(sh);
+    }
+  } else {
+    wrap.innerHTML = `<div class="la-error-msg">${data}</div>`;
+  }
+  return wrap;
+}
+
+function laInitDropdowns() {
+  const op1 = $('la-op1'), op2 = $('la-op2');
+  op1.innerHTML = ''; op2.innerHTML = '';
+  LA_KEYS.forEach(k => {
+    const o = LA_OBJECTS[k];
+    const label = `${o.name}  ·  ${o.shape[0]}×${o.shape[1]}  (${k})`;
+    op1.innerHTML += `<option value="${k}">${label}</option>`;
+    op2.innerHTML += `<option value="${k}">${label}</option>`;
+  });
+  // Add "none" option to op2 for transpose mode
+  op2.innerHTML += `<option value="∅">— (n/a)</option>`;
+  op1.value = 'A_2x3';
+  op2.value = 'B_3x2';
+}
+
+function laTranspose(M) {
+  const rows = M.length, cols = M[0].length;
+  const T = Array.from({length: cols}, () => Array(rows).fill(0));
+  for (let i = 0; i < rows; i++) for (let j = 0; j < cols; j++) T[j][i] = M[i][j];
+  return T;
+}
+function laAdd(A, B) {
+  return A.map((row, i) => row.map((v, j) => v + B[i][j]));
+}
+function laSub(A, B) {
+  return A.map((row, i) => row.map((v, j) => v - B[i][j]));
+}
+function laMul(A, B) {
+  const m = A.length, n = A[0].length, p = B[0].length;
+  const C = Array.from({length: m}, () => Array(p).fill(0));
+  for (let i = 0; i < m; i++)
+    for (let j = 0; j < p; j++) {
+      let s = 0;
+      for (let k = 0; k < n; k++) s += A[i][k] * B[k][j];
+      C[i][j] = s;
+    }
+  return C;
+}
+
+function laUpdateOp2State() {
+  const op = $('la-operation').value;
+  const state = $('la-op2-state');
+  if (op === 'trans') {
+    $('la-op2').disabled = true;
+    state.textContent = '(disabled — single operand)';
+  } else {
+    $('la-op2').disabled = false;
+    state.textContent = '';
+  }
+}
+
+function laCompute() {
+  const op = $('la-operation').value;
+  const k1 = $('la-op1').value, k2 = $('la-op2').value;
+  const o1 = LA_OBJECTS[k1], o2 = LA_OBJECTS[k2];
+  const stage = $('la-stage');
+  const explain = $('la-explain');
+  stage.innerHTML = ''; explain.innerHTML = ''; explain.classList.remove('show');
+
+  // Always show operand 1
+  const o1Wrap = document.createElement('div');
+  o1Wrap.className = 'la-operand';
+  o1Wrap.appendChild(buildLabel(`${o1.name} (${o1.shape[0]}×${o1.shape[1]})`));
+  o1Wrap.appendChild(laFormatMatrix(o1.data, false, false, o1.desc));
+  stage.appendChild(o1Wrap);
+
+  // Symbol
+  const symbols = { add: '+', sub: '−', mul: '·', dot: '·', trans: 'ᵀ' };
+  const sym = document.createElement('div');
+  sym.className = 'la-symbol';
+  sym.textContent = symbols[op];
+  stage.appendChild(sym);
+
+  // Operand 2 if needed
+  if (op !== 'trans') {
+    const o2Wrap = document.createElement('div');
+    o2Wrap.className = 'la-operand';
+    o2Wrap.appendChild(buildLabel(`${o2.name} (${o2.shape[0]}×${o2.shape[1]})`));
+    o2Wrap.appendChild(laFormatMatrix(o2.data, false, false, o2.desc));
+    stage.appendChild(o2Wrap);
+  }
+
+  // Equals
+  const eq = document.createElement('div');
+  eq.className = 'la-symbol';
+  eq.textContent = '=';
+  stage.appendChild(eq);
+
+  // Result
+  const resWrap = document.createElement('div');
+  resWrap.className = 'la-operand';
+  resWrap.appendChild(buildLabel('Result'));
+
+  let result, errorMsg = null, explanation = '';
+
+  try {
+    if (op === 'trans') {
+      result = laTranspose(o1.data);
+      explanation = `<span class="em">Transpose:</span> Aᵀ flips rows ↔ columns.<br>`
+        + `<span class="step">A is ${o1.shape[0]}×${o1.shape[1]}, so Aᵀ is ${o1.shape[1]}×${o1.shape[0]}.</span><br>`
+        + `<span class="step">Element (i,j) of Aᵀ = element (j,i) of A.</span>`;
+    } else if (op === 'add' || op === 'sub') {
+      if (o1.shape[0] !== o2.shape[0] || o1.shape[1] !== o2.shape[1]) {
+        errorMsg = `Shape mismatch: ${o1.name} is ${o1.shape[0]}×${o1.shape[1]} but ${o2.name} is ${o2.shape[0]}×${o2.shape[1]}.<br><br>` +
+          `<span style="color:var(--text);">Addition and subtraction require the <em>exact same shape</em> — they happen element-wise.</span><br><br>` +
+          `Pick two operands with matching dimensions.`;
+      } else {
+        result = (op === 'add') ? laAdd(o1.data, o2.data) : laSub(o1.data, o2.data);
+        const opStr = op === 'add' ? '+' : '−';
+        const eg = `${o1.data[0][0]} ${opStr} ${o2.data[0][0]} = ${op === 'add' ? o1.data[0][0]+o2.data[0][0] : o1.data[0][0]-o2.data[0][0]}`;
+        explanation = `<span class="em">Element-wise ${op === 'add' ? 'addition' : 'subtraction'}:</span> add/subtract corresponding entries.<br>`
+          + `<span class="step">Both operands are ${o1.shape[0]}×${o1.shape[1]} → result is also ${o1.shape[0]}×${o1.shape[1]}.</span><br>`
+          + `<span class="step">e.g. position (1,1): ${eg}</span>`;
+      }
+    } else if (op === 'mul') {
+      if (o1.shape[1] !== o2.shape[0]) {
+        errorMsg = `Inner-dimension mismatch: ${o1.name} is ${o1.shape[0]}×<strong>${o1.shape[1]}</strong> and ${o2.name} is <strong>${o2.shape[0]}</strong>×${o2.shape[1]}.<br><br>` +
+          `<span style="color:var(--text);">For matrix multiplication, the <em>inner</em> dimensions must match: (m×<strong>n</strong>) · (<strong>n</strong>×p) → (m×p).</span><br><br>` +
+          `Here ${o1.shape[1]} ≠ ${o2.shape[0]}, so the dot products that build each entry don't have matching lengths.`;
+      } else {
+        result = laMul(o1.data, o2.data);
+        const eg = o1.data[0].map((a, k) => `${a}·${o2.data[k][0]}`).join(' + ');
+        const eg_val = o1.data[0].reduce((s, a, k) => s + a * o2.data[k][0], 0);
+        explanation = `<span class="em">Matrix multiply:</span> each entry is a row × column dot product.<br>`
+          + `<span class="step">Inner dims match: ${o1.shape[0]}×<strong>${o1.shape[1]}</strong> · <strong>${o2.shape[0]}</strong>×${o2.shape[1]} → ${o1.shape[0]}×${o2.shape[1]}.</span><br>`
+          + `<span class="step">e.g. result[1,1] = (row 1 of ${o1.name}) · (col 1 of ${o2.name}) = ${eg} = ${eg_val}.</span>`;
+      }
+    } else if (op === 'dot') {
+      if (o1.kind !== 'vector' || o2.kind !== 'vector') {
+        errorMsg = `Dot product is defined for vectors. ${o1.name} is a ${o1.kind}, ${o2.name} is a ${o2.kind}.<br><br>` +
+          `Pick two vectors (u, v, or w) for this operation.`;
+      } else if (o1.shape[0] !== o2.shape[0]) {
+        errorMsg = `Length mismatch: ${o1.name} has ${o1.shape[0]} components, ${o2.name} has ${o2.shape[0]}.<br><br>` +
+          `<span style="color:var(--text);">x · y = Σ xᵢyᵢ — both vectors must have the same length.</span>`;
+      } else {
+        let s = 0;
+        const terms = [];
+        for (let i = 0; i < o1.shape[0]; i++) {
+          const a = o1.data[i][0], b = o2.data[i][0];
+          terms.push(`${a}·${b}`);
+          s += a * b;
+        }
+        result = [[s]];
+        explanation = `<span class="em">Dot product:</span> sum of pairwise products.<br>`
+          + `<span class="step">${o1.name} · ${o2.name} = ${terms.join(' + ')} = <strong>${s}</strong></span><br>`
+          + `<span class="step">Result is a scalar (a single number).</span>`;
+      }
+    }
+  } catch (e) {
+    errorMsg = 'Unexpected error: ' + e.message;
+  }
+
+  if (errorMsg) {
+    resWrap.appendChild(laFormatMatrix(errorMsg, true, false, 'shape error'));
+  } else {
+    const isScalar = (op === 'dot');
+    resWrap.appendChild(laFormatMatrix(result, false, true, isScalar ? 'scalar (1×1)' : `${result.length}×${result[0].length}`));
+  }
+  stage.appendChild(resWrap);
+
+  if (explanation) {
+    explain.innerHTML = explanation;
+    explain.classList.add('show');
+  } else if (errorMsg) {
+    explain.innerHTML = `<span class="em">Why this fails:</span><br><span class="step">${errorMsg.replace(/<br>/g, ' ').replace(/<[^>]+>/g, '')}</span>`;
+    explain.classList.add('show');
+  }
+}
+
+function buildLabel(text) {
+  const d = document.createElement('div');
+  d.className = 'la-op-label';
+  d.textContent = text;
+  return d;
+}
+
+laInitDropdowns();
+$('la-operation').addEventListener('change', laUpdateOp2State);
+$('la-compute').addEventListener('click', laCompute);
+laUpdateOp2State();
+laCompute();
+
+
+/* === script_part2.js === */
+/* ════════════════════════════════════════════════════
+   PANEL 2: GRADIENT DESCENT
+   ════════════════════════════════════════════════════ */
+const GD = {
+  data: [], w: [0, 0], b: 0, lr: 0.1, epoch: 0, lossHist: [], playing: false, timer: null
+};
+
+function gdGenerateData(spread) {
+  const rng = mulberry32(7);
+  const out = [];
+  // Class 0 cluster
+  for (let i = 0; i < 30; i++) {
+    out.push({ x: -1.2 + spread * randn(rng) * 0.5, y: -0.6 + spread * randn(rng) * 0.5, label: 0 });
+  }
+  // Class 1 cluster
+  for (let i = 0; i < 30; i++) {
+    out.push({ x: 1.2 + spread * randn(rng) * 0.5, y: 0.6 + spread * randn(rng) * 0.5, label: 1 });
+  }
+  return out;
+}
+function sigmoid(z) { return 1 / (1 + Math.exp(-z)); }
+
+function gdLossAndGrad() {
+  let L = 0, g1 = 0, g2 = 0, gb = 0, correct = 0;
+  const n = GD.data.length;
+  for (const p of GD.data) {
+    const z = GD.w[0] * p.x + GD.w[1] * p.y + GD.b;
+    const yhat = sigmoid(z);
+    const eps = 1e-12;
+    L += -(p.label * Math.log(yhat + eps) + (1 - p.label) * Math.log(1 - yhat + eps));
+    const err = yhat - p.label;
+    g1 += err * p.x; g2 += err * p.y; gb += err;
+    if ((yhat >= 0.5 ? 1 : 0) === p.label) correct++;
+  }
+  return { L: L / n, grad: [g1 / n, g2 / n, gb / n], acc: correct / n };
+}
+
+function gdReset() {
+  const spread = parseFloat($('gd-spread').value);
+  GD.data = gdGenerateData(spread);
+  // Bad initial line
+  GD.w = [-0.4, 0.6]; GD.b = 0.2;
+  GD.epoch = 0; GD.lossHist = [];
+  if (GD.timer) { clearInterval(GD.timer); GD.timer = null; }
+  GD.playing = false;
+  $('gd-play').textContent = '▶ Play';
+  $('gd-stat-status').textContent = 'idle';
+  gdRender();
+}
+
+function gdStep() {
+  const { L, grad, acc } = gdLossAndGrad();
+  if (GD.lossHist.length === 0) GD.lossHist.push(L);
+  GD.w[0] -= GD.lr * grad[0];
+  GD.w[1] -= GD.lr * grad[1];
+  GD.b    -= GD.lr * grad[2];
+  GD.epoch++;
+  const after = gdLossAndGrad();
+  GD.lossHist.push(after.L);
+  if (GD.lossHist.length > 250) GD.lossHist.shift();
+  // Detect blowup
+  if (!Number.isFinite(after.L) || Math.abs(GD.w[0]) > 50 || Math.abs(GD.w[1]) > 50) {
+    $('gd-stat-status').innerHTML = '<span style="color:var(--wrong)">diverged ⚠</span>';
+    if (GD.timer) { clearInterval(GD.timer); GD.timer = null; GD.playing = false; $('gd-play').textContent = '▶ Play'; }
+  } else if (Math.hypot(grad[0], grad[1], grad[2]) < 1e-3) {
+    $('gd-stat-status').innerHTML = '<span style="color:var(--accent)">converged ✓</span>';
+    if (GD.timer) { clearInterval(GD.timer); GD.timer = null; GD.playing = false; $('gd-play').textContent = '▶ Play'; }
+  } else {
+    $('gd-stat-status').textContent = GD.playing ? 'training…' : 'stepping';
+  }
+  gdRender();
+}
+
+function gdPlayToggle() {
+  if (GD.playing) {
+    clearInterval(GD.timer); GD.timer = null; GD.playing = false;
+    $('gd-play').textContent = '▶ Play';
+  } else {
+    GD.playing = true;
+    $('gd-play').textContent = '❚❚ Pause';
+    GD.timer = setInterval(() => {
+      gdStep();
+      if (GD.epoch > 1000) { clearInterval(GD.timer); GD.timer = null; GD.playing = false; $('gd-play').textContent = '▶ Play'; }
+    }, 60);
+  }
+}
+
+function gdRender() {
+  const { L, grad, acc } = gdLossAndGrad();
+  $('gd-epoch').textContent = GD.epoch;
+  $('gd-stat-loss').textContent = fmt(L, 4);
+  $('gd-stat-grad').textContent = fmt(Math.hypot(grad[0], grad[1], grad[2]), 4);
+  $('gd-stat-acc').textContent = (acc * 100).toFixed(1) + '%';
+  gdRenderScatter();
+  gdRenderLoss();
+}
+
+function gdRenderScatter() {
+  const el = $('gd-scatter');
+  clearSVG(el);
+  const W = 400, H = 320, pad = 30;
+  // Axes
+  el.appendChild(svg('rect', { x: pad, y: pad, width: W - 2 * pad, height: H - 2 * pad, fill: 'none', stroke: '#243048', 'stroke-width': 1 }));
+  // Grid
+  for (let i = 1; i < 5; i++) {
+    const xx = pad + (W - 2 * pad) * i / 5;
+    const yy = pad + (H - 2 * pad) * i / 5;
+    el.appendChild(svg('line', { x1: xx, y1: pad, x2: xx, y2: H - pad, stroke: '#1a2235', 'stroke-width': 1 }));
+    el.appendChild(svg('line', { x1: pad, y1: yy, x2: W - pad, y2: yy, stroke: '#1a2235', 'stroke-width': 1 }));
+  }
+  // Map data range
+  const xrange = [-3, 3], yrange = [-2.5, 2.5];
+  const xToPx = x => pad + ((x - xrange[0]) / (xrange[1] - xrange[0])) * (W - 2 * pad);
+  const yToPx = y => H - pad - ((y - yrange[0]) / (yrange[1] - yrange[0])) * (H - 2 * pad);
+
+  // Decision line: w1*x + w2*y + b = 0  →  y = -(w1*x + b)/w2
+  if (Math.abs(GD.w[1]) > 1e-6) {
+    const x1 = xrange[0], x2 = xrange[1];
+    const y1 = -(GD.w[0] * x1 + GD.b) / GD.w[1];
+    const y2 = -(GD.w[0] * x2 + GD.b) / GD.w[1];
+    el.appendChild(svg('line', { x1: xToPx(x1), y1: yToPx(y1), x2: xToPx(x2), y2: yToPx(y2), stroke: '#4ecca3', 'stroke-width': 2.5, opacity: 0.9 }));
+  }
+
+  // Points
+  GD.data.forEach(p => {
+    const c = p.label === 0 ? '#5eead4' : '#fcd34d';
+    el.appendChild(svg('circle', { cx: xToPx(p.x), cy: yToPx(p.y), r: 4, fill: c, opacity: 0.85, stroke: '#0a0e1a', 'stroke-width': 0.5 }));
+  });
+
+  // Axis labels
+  const xLab = svg('text', { x: W / 2, y: H - 8, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'middle' });
+  xLab.textContent = 'feature x'; el.appendChild(xLab);
+  const yLab = svg('text', { x: 12, y: H / 2, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'middle', transform: `rotate(-90 12 ${H/2})` });
+  yLab.textContent = 'feature y'; el.appendChild(yLab);
+}
+
+function gdRenderLoss() {
+  const el = $('gd-loss');
+  clearSVG(el);
+  const W = 400, H = 320, pad = 36;
+
+  // Frame
+  el.appendChild(svg('rect', { x: pad, y: pad, width: W - 2 * pad, height: H - 2 * pad, fill: 'none', stroke: '#243048', 'stroke-width': 1 }));
+  // Y axis label
+  const yL = svg('text', { x: 12, y: H/2, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'middle', transform: `rotate(-90 12 ${H/2})` });
+  yL.textContent = 'ℒ(θ)'; el.appendChild(yL);
+  const xL = svg('text', { x: W/2, y: H - 8, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'middle' });
+  xL.textContent = 'epoch'; el.appendChild(xL);
+
+  if (GD.lossHist.length < 2) {
+    const t = svg('text', { x: W/2, y: H/2, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '11', 'text-anchor': 'middle' });
+    t.textContent = 'Press Step or Play to begin training';
+    el.appendChild(t);
+    // Show pretty parabola anyway as a static reminder
+    let path = '';
+    for (let i = 0; i <= 100; i++) {
+      const x = pad + i / 100 * (W - 2*pad);
+      const t = (i - 60) / 35;
+      const y = pad + 30 + (H - 2*pad - 60) * (1 - Math.exp(-t*t));
+      path += (i === 0 ? 'M' : 'L') + x + ',' + y + ' ';
+    }
+    el.appendChild(svg('path', { d: path, stroke: '#ec4899', 'stroke-width': 1.5, fill: 'none', opacity: 0.35, 'stroke-dasharray': '4,3' }));
+    return;
+  }
+
+  const maxL = Math.max(...GD.lossHist, 0.7);
+  const minL = Math.min(...GD.lossHist, 0);
+  const range = maxL - minL + 1e-6;
+
+  // Draw the parabola backdrop (illustrative, like the slide deck)
+  let bg = '';
+  for (let i = 0; i <= 100; i++) {
+    const x = pad + i / 100 * (W - 2*pad);
+    const t = (i - 60) / 35;
+    const y = pad + 30 + (H - 2*pad - 60) * (1 - Math.exp(-t*t));
+    bg += (i === 0 ? 'M' : 'L') + x + ',' + y + ' ';
+  }
+  el.appendChild(svg('path', { d: bg, stroke: '#ec4899', 'stroke-width': 1, fill: 'none', opacity: 0.18, 'stroke-dasharray': '3,3' }));
+
+  // Loss curve
+  let path = '';
+  GD.lossHist.forEach((v, i) => {
+    const x = pad + (i / Math.max(GD.lossHist.length - 1, 1)) * (W - 2 * pad);
+    const y = (H - pad) - ((v - minL) / range) * (H - 2 * pad);
+    path += (i === 0 ? 'M' : 'L') + x + ',' + y + ' ';
+  });
+  el.appendChild(svg('path', { d: path, stroke: '#ec4899', 'stroke-width': 2, fill: 'none' }));
+  // Last point dot
+  const last = GD.lossHist[GD.lossHist.length - 1];
+  const lx = pad + (W - 2*pad);
+  const ly = (H - pad) - ((last - minL) / range) * (H - 2 * pad);
+  el.appendChild(svg('circle', { cx: lx, cy: ly, r: 4, fill: '#fcd34d', stroke: '#0a0e1a', 'stroke-width': 1 }));
+
+  // Min/max labels
+  const minLabel = svg('text', { x: pad - 4, y: H - pad + 4, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'end' });
+  minLabel.textContent = fmt(minL, 2); el.appendChild(minLabel);
+  const maxLabel = svg('text', { x: pad - 4, y: pad + 4, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'end' });
+  maxLabel.textContent = fmt(maxL, 2); el.appendChild(maxLabel);
+}
+
+$('gd-lr').addEventListener('input', e => {
+  GD.lr = Math.pow(10, parseFloat(e.target.value));
+  $('gd-lr-val').textContent = GD.lr.toFixed(GD.lr < 0.01 ? 4 : 3);
+});
+$('gd-spread').addEventListener('input', e => {
+  $('gd-spread-val').textContent = e.target.value;
+  gdReset();
+});
+$('gd-step').addEventListener('click', gdStep);
+$('gd-play').addEventListener('click', gdPlayToggle);
+$('gd-reset').addEventListener('click', gdReset);
+
+GD.lr = Math.pow(10, parseFloat($('gd-lr').value));
+$('gd-lr-val').textContent = GD.lr.toFixed(3);
+gdReset();
+
+
+/* === script_part3.js === */
+/* ════════════════════════════════════════════════════
+   PANEL 3: BAYES' THEOREM (Steve example)
+   ════════════════════════════════════════════════════ */
+const BAYES = {
+  ratio: 20,    // farmers per librarian (means F = ratio * L, with L=1)
+  pl: 40,       // % librarians fitting Steve
+  pf: 10,       // % farmers fitting Steve
+  highlight: 'post' // 'all' | 'L' | 'F' | 'post'
+};
+// We render a fixed grid: nL=10 librarians on the left column(s), nF=10*ratio farmers on the right
+const BAYES_LIBR = 10;
+
+function bayesRender() {
+  const { ratio, pl, pf, highlight } = BAYES;
+  const nF = BAYES_LIBR * ratio;
+  const totalCells = BAYES_LIBR + nF;
+
+  // Compute counts that "fit Steve"
+  const fitL = Math.round(BAYES_LIBR * pl / 100);
+  const fitF = Math.round(nF * pf / 100);
+  const post = (fitL + fitF) > 0 ? fitL / (fitL + fitF) : 0;
+
+  // Render formula (no extra blank node)
+  const f = $('bayes-formula');
+  f.innerHTML = `
+    <span style="color:var(--text-muted)">P(Librarian | Steve) =</span>
+    <span class="frac">
+      <span class="num">P(L) · P(Steve|L)</span>
+      <span class="den">P(L) · P(Steve|L) + P(F) · P(Steve|F)</span>
+    </span>
+    <span style="color:var(--text-muted)">=</span>
+    <span class="frac">
+      <span class="num">${fitL}</span>
+      <span class="den">${fitL} + ${fitF} = ${fitL+fitF}</span>
+    </span>
+    <span class="res">= ${(post*100).toFixed(1)}%</span>
+  `;
+
+  // Render the SVG population grid
+  const el = $('bayes-svg');
+  clearSVG(el);
+  const W = 600, H = 320;
+
+  // Layout: total of (10 + nF) people. Try a grid.
+  // Compute rows/cols: aim for ~80 columns max
+  const cols = Math.min(Math.ceil(Math.sqrt(totalCells * (W/H))), totalCells);
+  const rows = Math.ceil(totalCells / cols);
+  const cellW = W / cols;
+  const cellH = (H - 30) / rows;
+  const r = Math.min(cellW, cellH) * 0.34;
+
+  // Top label: "10 [librarians]" and "200 [farmers]"
+  const labelY = 14;
+  const lpx = (BAYES_LIBR / cols) * W / 2; // center over librarian region
+  const fpx = (BAYES_LIBR / cols) * W + ((cols - BAYES_LIBR) * W / cols) / 2;
+  const lLab = svg('text', { x: lpx, y: labelY, fill: '#a5b4fc', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '11', 'text-anchor': 'middle' });
+  lLab.textContent = `${BAYES_LIBR} librarian${BAYES_LIBR>1?'s':''}`;
+  el.appendChild(lLab);
+  if (cols > BAYES_LIBR) {
+    const fLab = svg('text', { x: fpx, y: labelY, fill: '#5eead4', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '11', 'text-anchor': 'middle' });
+    fLab.textContent = `${nF} farmers`;
+    el.appendChild(fLab);
+  }
+  // Vertical divider after librarians
+  const divX = BAYES_LIBR * cellW;
+  el.appendChild(svg('line', { x1: divX, y1: 26, x2: divX, y2: H - 4, stroke: '#243048', 'stroke-width': 1, 'stroke-dasharray': '3,3' }));
+
+  // Build people in a row-major fashion: first all librarians, then farmers.
+  // To get the slide-style "librarians on the left column", let's instead place
+  // librarians in the leftmost column from top to bottom.
+  // But the slide had 10 librarians on the LEFT COLUMN — actually 10 librarians as a column.
+  // We have ~rows rows. If rows >= 10, put librarians as the leftmost cells (col=0).
+  // Otherwise fall back to "first 10 cells".
+
+  let positions = []; // [{x,y,kind,fits,index}]
+  // Determine layout: use leftmost column for librarians if possible.
+  if (rows >= BAYES_LIBR) {
+    // Librarians occupy first column, top 10 cells
+    for (let i = 0; i < BAYES_LIBR; i++) {
+      positions.push({
+        col: 0, row: i, kind: 'L', idx: i
+      });
+    }
+    let placed = 0;
+    for (let row = 0; row < rows && placed < nF; row++) {
+      for (let col = 1; col < cols && placed < nF; col++) {
+        positions.push({ col, row, kind: 'F', idx: placed });
+        placed++;
+      }
+    }
+  } else {
+    // Compact layout: fill row-major, librarians first
+    let i = 0;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        if (i >= totalCells) break;
+        const kind = i < BAYES_LIBR ? 'L' : 'F';
+        const idx = kind === 'L' ? i : i - BAYES_LIBR;
+        positions.push({ col, row, kind, idx });
+        i++;
+      }
+    }
+  }
+
+  // Determine if each person "fits Steve's description" (deterministic by index)
+  positions.forEach(p => {
+    p.fits = p.kind === 'L' ? (p.idx < fitL) : (p.idx < fitF);
+  });
+
+  // Highlight logic
+  function colorFor(p) {
+    const baseL = '#a5b4fc', baseF = '#5eead4';
+    const fitColor = '#fcd34d';
+    let opacity = 1;
+    let fill = p.kind === 'L' ? baseL : baseF;
+    let stroke = 'none', strokeW = 0;
+
+    if (highlight === 'all') {
+      // Everyone visible at full opacity
+    } else if (highlight === 'L') {
+      // Librarians who fit Steve: highlight; others fade
+      if (p.kind === 'L' && p.fits) { fill = fitColor; }
+      else { opacity = 0.18; }
+    } else if (highlight === 'F') {
+      if (p.kind === 'F' && p.fits) { fill = fitColor; }
+      else { opacity = 0.18; }
+    } else if (highlight === 'post') {
+      // Highlight everyone who fits (numerator+denominator), but emphasize librarians
+      if (p.fits) {
+        fill = (p.kind === 'L') ? '#a5b4fc' : '#5eead4';
+        stroke = '#fcd34d'; strokeW = 1.5;
+      } else { opacity = 0.16; }
+    }
+    return { fill, opacity, stroke, strokeW };
+  }
+
+  positions.forEach(p => {
+    const cx = p.col * cellW + cellW / 2;
+    const cy = 30 + p.row * cellH + cellH / 2;
+    const c = colorFor(p);
+    el.appendChild(svg('circle', {
+      cx, cy, r,
+      fill: c.fill, opacity: c.opacity,
+      stroke: c.stroke, 'stroke-width': c.strokeW
+    }));
+  });
+
+  // Update active highlight button visual
+  $$('#bayes-hl .bayes-hl-btn').forEach(b => b.classList.toggle('active', b.dataset.hl === highlight));
+}
+
+$('bayes-ratio').addEventListener('input', e => {
+  BAYES.ratio = +e.target.value;
+  $('bayes-ratio-val').textContent = `${BAYES.ratio} : 1`;
+  bayesRender();
+});
+$('bayes-pl').addEventListener('input', e => {
+  BAYES.pl = +e.target.value;
+  $('bayes-pl-val').textContent = `${BAYES.pl}%`;
+  bayesRender();
+});
+$('bayes-pf').addEventListener('input', e => {
+  BAYES.pf = +e.target.value;
+  $('bayes-pf-val').textContent = `${BAYES.pf}%`;
+  bayesRender();
+});
+$$('#bayes-hl .bayes-hl-btn').forEach(btn => {
+  btn.addEventListener('click', () => { BAYES.highlight = btn.dataset.hl; bayesRender(); });
+});
+
+bayesRender();
+
+/* ════════════════════════════════════════════════════
+   PANEL 4: SAMPLING FROM DISTRIBUTIONS
+   ════════════════════════════════════════════════════ */
+const DIST = {
+  type: 'normal', p1: 0, p2: 1, n: 100, samples: [], rng: mulberry32(42)
+};
+
+const DIST_PARAMS = {
+  normal:      { p1: { label: 'mean μ',  min: -2, max: 2,   step: 0.1, def: 0   },
+                 p2: { label: 'std dev σ', min: 0.1, max: 3, step: 0.1, def: 1   } },
+  uniform:     { p1: { label: 'min a',   min: -3, max: 0,   step: 0.1, def: -1  },
+                 p2: { label: 'max b',   min: 0,  max: 3,   step: 0.1, def: 1   } },
+  exponential: { p1: { label: 'rate λ',  min: 0.2, max: 3,  step: 0.1, def: 1   },
+                 p2: { label: '(unused)', min: 0, max: 1,   step: 0.1, def: 0   } },
+};
+
+function distSample(rng) {
+  if (DIST.type === 'normal') {
+    return DIST.p1 + DIST.p2 * randn(rng);
+  } else if (DIST.type === 'uniform') {
+    const lo = Math.min(DIST.p1, DIST.p2), hi = Math.max(DIST.p1, DIST.p2);
+    return lo + rng() * (hi - lo);
+  } else if (DIST.type === 'exponential') {
+    const lambda = Math.max(DIST.p1, 0.05);
+    return -Math.log(1 - rng() + 1e-12) / lambda;
+  }
+  return 0;
+}
+
+function distPDF(x) {
+  if (DIST.type === 'normal') {
+    const sigma = Math.max(DIST.p2, 1e-3);
+    return Math.exp(-((x - DIST.p1) ** 2) / (2 * sigma * sigma)) / (sigma * Math.sqrt(2 * Math.PI));
+  } else if (DIST.type === 'uniform') {
+    const lo = Math.min(DIST.p1, DIST.p2), hi = Math.max(DIST.p1, DIST.p2);
+    if (hi - lo < 1e-6) return 0;
+    return (x >= lo && x <= hi) ? 1 / (hi - lo) : 0;
+  } else if (DIST.type === 'exponential') {
+    const lambda = Math.max(DIST.p1, 0.05);
+    return x >= 0 ? lambda * Math.exp(-lambda * x) : 0;
+  }
+  return 0;
+}
+
+function distPopMeanMed() {
+  if (DIST.type === 'normal') {
+    return { mean: DIST.p1, median: DIST.p1 };
+  } else if (DIST.type === 'uniform') {
+    const lo = Math.min(DIST.p1, DIST.p2), hi = Math.max(DIST.p1, DIST.p2);
+    return { mean: (lo + hi) / 2, median: (lo + hi) / 2 };
+  } else if (DIST.type === 'exponential') {
+    const lambda = Math.max(DIST.p1, 0.05);
+    return { mean: 1 / lambda, median: Math.log(2) / lambda };
+  }
+  return { mean: NaN, median: NaN };
+}
+
+function distRange() {
+  if (DIST.type === 'normal') {
+    const r = Math.max(DIST.p2 * 4, 0.5);
+    return [DIST.p1 - r, DIST.p1 + r];
+  } else if (DIST.type === 'uniform') {
+    const lo = Math.min(DIST.p1, DIST.p2), hi = Math.max(DIST.p1, DIST.p2);
+    const pad = (hi - lo) * 0.25 + 0.2;
+    return [lo - pad, hi + pad];
+  } else if (DIST.type === 'exponential') {
+    const lambda = Math.max(DIST.p1, 0.05);
+    return [-0.2, 6 / lambda];
+  }
+  return [-3, 3];
+}
+
+function distResample() {
+  DIST.samples = [];
+  for (let i = 0; i < DIST.n; i++) DIST.samples.push(distSample(DIST.rng));
+  distRender();
+}
+
+function distRender() {
+  const el = $('dist-svg');
+  clearSVG(el);
+  const W = 600, H = 340, pad = 36;
+
+  const [lo, hi] = distRange();
+  const xToPx = x => pad + ((x - lo) / (hi - lo)) * (W - 2 * pad);
+
+  // Frame
+  el.appendChild(svg('rect', { x: pad, y: pad, width: W - 2 * pad, height: H - 2 * pad, fill: 'none', stroke: '#243048', 'stroke-width': 1 }));
+
+  // Histogram
+  const nBins = clamp(Math.round(Math.sqrt(DIST.n) * 1.4), 8, 50);
+  const binW = (hi - lo) / nBins;
+  const counts = new Array(nBins).fill(0);
+  DIST.samples.forEach(v => {
+    const idx = Math.floor((v - lo) / binW);
+    if (idx >= 0 && idx < nBins) counts[idx]++;
+  });
+  // Normalize histogram so heights are densities (counts / (N * binW)) — comparable to PDF
+  const densities = counts.map(c => c / (DIST.n * binW));
+  // Find max for y-scale (use max of pdf and histogram)
+  let yMax = 0;
+  for (let i = 0; i <= 100; i++) {
+    const x = lo + (i / 100) * (hi - lo);
+    yMax = Math.max(yMax, distPDF(x));
+  }
+  yMax = Math.max(yMax, ...densities, 0.01) * 1.15;
+  const yToPx = y => H - pad - (y / yMax) * (H - 2 * pad);
+
+  // Bars
+  densities.forEach((d, i) => {
+    if (d <= 0) return;
+    const x0 = xToPx(lo + i * binW), x1 = xToPx(lo + (i + 1) * binW);
+    const y0 = yToPx(d);
+    el.appendChild(svg('rect', {
+      x: x0 + 1, y: y0, width: Math.max(x1 - x0 - 2, 1), height: H - pad - y0,
+      fill: '#f0a500', opacity: 0.55
+    }));
+  });
+
+  // PDF curve
+  let pathD = '';
+  const steps = 200;
+  for (let i = 0; i <= steps; i++) {
+    const x = lo + (i / steps) * (hi - lo);
+    const y = distPDF(x);
+    const px = xToPx(x), py = yToPx(y);
+    pathD += (i === 0 ? 'M' : 'L') + px + ',' + py + ' ';
+  }
+  el.appendChild(svg('path', { d: pathD, stroke: '#5eead4', 'stroke-width': 2.5, fill: 'none' }));
+
+  // Population mean/median lines
+  const pop = distPopMeanMed();
+  if (Number.isFinite(pop.mean)) {
+    const mx = xToPx(pop.mean);
+    el.appendChild(svg('line', { x1: mx, y1: pad, x2: mx, y2: H - pad, stroke: '#a5b4fc', 'stroke-width': 1.5, 'stroke-dasharray': '5,3' }));
+    const lab = svg('text', { x: mx + 4, y: pad + 12, fill: '#a5b4fc', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9' });
+    lab.textContent = 'pop μ'; el.appendChild(lab);
+  }
+
+  // Sample mean
+  if (DIST.samples.length > 0) {
+    const smean = DIST.samples.reduce((a, b) => a + b, 0) / DIST.samples.length;
+    const smx = xToPx(smean);
+    el.appendChild(svg('line', { x1: smx, y1: pad, x2: smx, y2: H - pad, stroke: '#fcd34d', 'stroke-width': 1.5 }));
+    const lab = svg('text', { x: smx + 4, y: pad + 24, fill: '#fcd34d', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9' });
+    lab.textContent = 'samp x̄'; el.appendChild(lab);
+  }
+
+  // X axis ticks
+  const ticks = 5;
+  for (let i = 0; i <= ticks; i++) {
+    const x = lo + (i / ticks) * (hi - lo);
+    const px = xToPx(x);
+    el.appendChild(svg('line', { x1: px, y1: H - pad, x2: px, y2: H - pad + 4, stroke: '#5a6b88', 'stroke-width': 1 }));
+    const t = svg('text', { x: px, y: H - pad + 14, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'middle' });
+    t.textContent = x.toFixed(1); el.appendChild(t);
+  }
+
+  // Stats panel
+  const sortedS = [...DIST.samples].sort((a, b) => a - b);
+  const sMean = DIST.samples.length ? DIST.samples.reduce((a, b) => a + b, 0) / DIST.samples.length : NaN;
+  const sMed = sortedS.length ? (sortedS.length % 2 === 0
+    ? (sortedS[sortedS.length / 2 - 1] + sortedS[sortedS.length / 2]) / 2
+    : sortedS[(sortedS.length - 1) / 2]) : NaN;
+  $('dist-pop-mean').textContent = fmt(pop.mean, 3);
+  $('dist-pop-med').textContent = fmt(pop.median, 3);
+  $('dist-smp-mean').textContent = fmt(sMean, 3);
+  $('dist-smp-med').textContent = fmt(sMed, 3);
+  const dMean = sMean - pop.mean, dMed = sMed - pop.median;
+  $('dist-smp-mean-diff').textContent = `Δ from pop μ: ${dMean >= 0 ? '+' : ''}${fmt(dMean, 3)}`;
+  $('dist-smp-med-diff').textContent = `Δ from pop med: ${dMed >= 0 ? '+' : ''}${fmt(dMed, 3)}`;
+}
+
+function distInitParams() {
+  const cfg = DIST_PARAMS[DIST.type];
+  const p1 = $('dist-p1'), p2 = $('dist-p2');
+  p1.min = cfg.p1.min; p1.max = cfg.p1.max; p1.step = cfg.p1.step; p1.value = cfg.p1.def;
+  p2.min = cfg.p2.min; p2.max = cfg.p2.max; p2.step = cfg.p2.step; p2.value = cfg.p2.def;
+  DIST.p1 = cfg.p1.def; DIST.p2 = cfg.p2.def;
+  $('dist-p1-val').textContent = `${cfg.p1.label}: ${DIST.p1}`;
+  $('dist-p2-val').textContent = DIST.type === 'exponential'
+    ? '—'
+    : `${cfg.p2.label}: ${DIST.p2}`;
+  // Update labels next to slider
+  p1.previousElementSibling.firstChild.nodeValue = cfg.p1.label + ' ';
+  p2.previousElementSibling.firstChild.nodeValue = cfg.p2.label + ' ';
+  p2.disabled = (DIST.type === 'exponential');
+}
+
+$('dist-type').addEventListener('change', e => {
+  DIST.type = e.target.value;
+  distInitParams();
+  distResample();
+});
+$('dist-p1').addEventListener('input', e => {
+  DIST.p1 = parseFloat(e.target.value);
+  const cfg = DIST_PARAMS[DIST.type];
+  $('dist-p1-val').textContent = `${cfg.p1.label}: ${DIST.p1.toFixed(2)}`;
+  distResample();
+});
+$('dist-p2').addEventListener('input', e => {
+  DIST.p2 = parseFloat(e.target.value);
+  const cfg = DIST_PARAMS[DIST.type];
+  $('dist-p2-val').textContent = DIST.type === 'exponential' ? '—' : `${cfg.p2.label}: ${DIST.p2.toFixed(2)}`;
+  distResample();
+});
+$('dist-n').addEventListener('input', e => {
+  DIST.n = +e.target.value;
+  $('dist-n-val').textContent = DIST.n;
+  distResample();
+});
+$('dist-resample').addEventListener('click', () => {
+  DIST.rng = mulberry32(Math.floor(Math.random() * 1e9));
+  distResample();
+});
+
+distInitParams();
+distResample();
+
+
+/* === script_part4.js === */
+/* ════════════════════════════════════════════════════
+   PANEL 5: NEURAL NETWORK
+   Implements a 2-layer MLP from scratch:
+     forward: x -> W1 x + b1 -> activation -> W2 . -> softmax
+     backward: cross-entropy gradient -> W1, b1, W2, b2 updates
+   ════════════════════════════════════════════════════ */
+const NN = {
+  H: 12, act: 'tanh', lr: 0.1, epochs: 600, dataKind: 'spiral',
+  X: [], Y: [], Xte: [], Yte: [],
+  W1: null, b1: null, W2: null, b2: null,
+  trainHist: [], testHist: [], training: false, currentEpoch: 0,
+  rngSeed: 17,
+  arch: [2, 12, 3]
+};
+const NN_NCLASS = 3;
+const NN_CLASS_COLORS = ['#ec4899', '#14b8a6', '#f59e0b'];
+const NN_CLASS_FILLS  = ['rgba(236,72,153,0.30)', 'rgba(20,184,166,0.30)', 'rgba(245,158,11,0.30)'];
+
+// ─── data generators ───
+function nnGenerateData(kind, seed) {
+  const rng = mulberry32(seed);
+  const X = [], Y = [];
+  if (kind === 'spiral') {
+    const N = 60; // per class
+    for (let c = 0; c < NN_NCLASS; c++) {
+      for (let i = 0; i < N; i++) {
+        const r = i / N * 1.0;
+        const t = c * 4 + i / N * 4 + randn(rng) * 0.18;
+        X.push([r * Math.sin(t), r * Math.cos(t)]);
+        Y.push(c);
+      }
+    }
+  } else if (kind === 'blobs') {
+    const centers = [[-1.0, -0.6], [1.0, -0.6], [0, 0.9]];
+    const N = 60;
+    for (let c = 0; c < NN_NCLASS; c++) {
+      for (let i = 0; i < N; i++) {
+        X.push([centers[c][0] + randn(rng) * 0.32, centers[c][1] + randn(rng) * 0.32]);
+        Y.push(c);
+      }
+    }
+  } else if (kind === 'moons') {
+    const N = 60;
+    for (let c = 0; c < NN_NCLASS; c++) {
+      for (let i = 0; i < N; i++) {
+        const t = (i / N) * Math.PI;
+        if (c === 0) {
+          X.push([Math.cos(t) - 0.3 + randn(rng) * 0.13, Math.sin(t) * 0.7 + 0.1 + randn(rng) * 0.13]);
+        } else if (c === 1) {
+          X.push([1 - Math.cos(t) + 0.3 + randn(rng) * 0.13, -Math.sin(t) * 0.7 - 0.1 + randn(rng) * 0.13]);
+        } else {
+          X.push([0.4 * Math.cos(t * 2), 0.4 * Math.sin(t * 2) - 0.6 + randn(rng) * 0.13]);
+        }
+        Y.push(c);
+      }
+    }
+  }
+  return { X, Y };
+}
+function nnSplit(X, Y, frac = 0.7, seed = 9) {
+  const rng = mulberry32(seed);
+  const n = X.length;
+  const idx = Array.from({length: n}, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  const cut = Math.floor(n * frac);
+  const tr = idx.slice(0, cut), te = idx.slice(cut);
+  return {
+    Xtr: tr.map(i => X[i]), Ytr: tr.map(i => Y[i]),
+    Xte: te.map(i => X[i]), Yte: te.map(i => Y[i])
+  };
+}
+
+function nnInitParams(H) {
+  const rng = mulberry32(NN.rngSeed);
+  // Xavier-ish init
+  const s1 = Math.sqrt(2 / 2);
+  const sH = Math.sqrt(2 / H);
+  NN.W1 = Array.from({length: H}, () => [randn(rng) * s1 * 0.5, randn(rng) * s1 * 0.5]);
+  NN.b1 = Array.from({length: H}, () => 0);
+  NN.W2 = Array.from({length: NN_NCLASS}, () => Array.from({length: H}, () => randn(rng) * sH * 0.5));
+  NN.b2 = Array.from({length: NN_NCLASS}, () => 0);
+}
+
+function nnAct(z) {
+  if (NN.act === 'tanh') return Math.tanh(z);
+  if (NN.act === 'relu') return Math.max(0, z);
+  if (NN.act === 'sigmoid') return 1 / (1 + Math.exp(-z));
+  return z;
+}
+function nnDAct(a) {
+  // derivative w.r.t. pre-activation z, given activation a
+  if (NN.act === 'tanh') return 1 - a * a;
+  if (NN.act === 'relu') return a > 0 ? 1 : 0;
+  if (NN.act === 'sigmoid') return a * (1 - a);
+  return 1;
+}
+
+function nnForward(x) {
+  const H = NN.W1.length;
+  const z1 = new Array(H), a1 = new Array(H);
+  for (let h = 0; h < H; h++) {
+    let s = NN.b1[h];
+    s += NN.W1[h][0] * x[0] + NN.W1[h][1] * x[1];
+    z1[h] = s; a1[h] = nnAct(s);
+  }
+  const z2 = new Array(NN_NCLASS);
+  for (let c = 0; c < NN_NCLASS; c++) {
+    let s = NN.b2[c];
+    for (let h = 0; h < H; h++) s += NN.W2[c][h] * a1[h];
+    z2[c] = s;
+  }
+  // softmax
+  const mx = Math.max(...z2);
+  const ex = z2.map(v => Math.exp(v - mx));
+  const sm = ex.reduce((a, b) => a + b, 0);
+  const probs = ex.map(v => v / sm);
+  return { a1, z1, probs };
+}
+
+function nnLoss(X, Y) {
+  let L = 0, correct = 0;
+  for (let i = 0; i < X.length; i++) {
+    const { probs } = nnForward(X[i]);
+    L += -Math.log(probs[Y[i]] + 1e-12);
+    let argmax = 0;
+    for (let c = 1; c < NN_NCLASS; c++) if (probs[c] > probs[argmax]) argmax = c;
+    if (argmax === Y[i]) correct++;
+  }
+  return { L: L / X.length, acc: correct / X.length };
+}
+
+function nnTrainStep() {
+  const H = NN.W1.length;
+  const N = NN.X.length;
+  // Accumulate gradients (full batch GD)
+  const dW1 = Array.from({length: H}, () => [0, 0]);
+  const db1 = new Array(H).fill(0);
+  const dW2 = Array.from({length: NN_NCLASS}, () => new Array(H).fill(0));
+  const db2 = new Array(NN_NCLASS).fill(0);
+
+  for (let i = 0; i < N; i++) {
+    const x = NN.X[i], y = NN.Y[i];
+    const { a1, z1, probs } = nnForward(x);
+    // dL/dz2 = probs - one_hot(y)
+    const dz2 = probs.slice();
+    dz2[y] -= 1;
+    // dW2 += dz2 ⊗ a1
+    for (let c = 0; c < NN_NCLASS; c++) {
+      db2[c] += dz2[c];
+      for (let h = 0; h < H; h++) dW2[c][h] += dz2[c] * a1[h];
+    }
+    // da1 = W2^T · dz2
+    const da1 = new Array(H).fill(0);
+    for (let h = 0; h < H; h++) {
+      let s = 0;
+      for (let c = 0; c < NN_NCLASS; c++) s += NN.W2[c][h] * dz2[c];
+      da1[h] = s;
+    }
+    // dz1 = da1 * dAct(a1)
+    for (let h = 0; h < H; h++) {
+      const dz1h = da1[h] * nnDAct(a1[h]);
+      db1[h] += dz1h;
+      dW1[h][0] += dz1h * x[0];
+      dW1[h][1] += dz1h * x[1];
+    }
+  }
+
+  // Apply update (mean over batch)
+  const lr = NN.lr;
+  for (let h = 0; h < H; h++) {
+    NN.b1[h] -= lr * db1[h] / N;
+    NN.W1[h][0] -= lr * dW1[h][0] / N;
+    NN.W1[h][1] -= lr * dW1[h][1] / N;
+  }
+  for (let c = 0; c < NN_NCLASS; c++) {
+    NN.b2[c] -= lr * db2[c] / N;
+    for (let h = 0; h < H; h++) NN.W2[c][h] -= lr * dW2[c][h] / N;
+  }
+}
+
+function nnConfusion(Xte, Yte) {
+  const cm = Array.from({length: NN_NCLASS}, () => new Array(NN_NCLASS).fill(0));
+  for (let i = 0; i < Xte.length; i++) {
+    const { probs } = nnForward(Xte[i]);
+    let pred = 0;
+    for (let c = 1; c < NN_NCLASS; c++) if (probs[c] > probs[pred]) pred = c;
+    cm[pred][Yte[i]]++;
+  }
+  return cm;
+}
+
+function nnReset() {
+  if (NN.training) NN.training = false;
+  NN.currentEpoch = 0;
+  NN.trainHist = []; NN.testHist = [];
+  const data = nnGenerateData(NN.dataKind, 11);
+  const sp = nnSplit(data.X, data.Y, 0.7);
+  NN.X = sp.Xtr; NN.Y = sp.Ytr; NN.Xte = sp.Xte; NN.Yte = sp.Yte;
+  nnInitParams(NN.H);
+  $('nn-train-acc').textContent = 'Train: —';
+  $('nn-test-acc').textContent = 'Test: —';
+  $('nn-epoch-shown').textContent = 'Epoch: 0';
+  $('nn-train').textContent = '▶ Train';
+  $('nn-train').disabled = false;
+  nnRenderAll();
+}
+
+async function nnTrain() {
+  if (NN.training) {
+    NN.training = false;
+    $('nn-train').textContent = '▶ Train';
+    return;
+  }
+  NN.training = true;
+  $('nn-train').innerHTML = '<span class="spinner"></span>Training…';
+
+  const totalEpochs = NN.epochs;
+  const renderEvery = Math.max(1, Math.floor(totalEpochs / 60));
+
+  for (let e = 0; e < totalEpochs && NN.training; e++) {
+    nnTrainStep();
+    NN.currentEpoch++;
+
+    if (e % renderEvery === 0 || e === totalEpochs - 1) {
+      const tr = nnLoss(NN.X, NN.Y);
+      const te = nnLoss(NN.Xte, NN.Yte);
+      NN.trainHist.push(tr.L);
+      NN.testHist.push(te.L);
+      $('nn-train-acc').textContent = `Train: ${(tr.acc * 100).toFixed(1)}%`;
+      $('nn-test-acc').textContent = `Test: ${(te.acc * 100).toFixed(1)}%`;
+      $('nn-epoch-shown').textContent = `Epoch: ${NN.currentEpoch}`;
+      nnRenderDecision();
+      nnRenderLosses();
+      // Yield to UI
+      await new Promise(r => setTimeout(r, 0));
+    }
+  }
+
+  // Final updates
+  const tr = nnLoss(NN.X, NN.Y);
+  const te = nnLoss(NN.Xte, NN.Yte);
+  $('nn-train-acc').textContent = `Train: ${(tr.acc * 100).toFixed(1)}%`;
+  $('nn-test-acc').textContent = `Test: ${(te.acc * 100).toFixed(1)}%`;
+  $('nn-epoch-shown').textContent = `Epoch: ${NN.currentEpoch}`;
+  nnRenderConfusion();
+  nnRenderArch();
+  NN.training = false;
+  $('nn-train').textContent = '▶ Train';
+}
+
+// ─── Rendering ───
+function nnDataBounds() {
+  let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+  for (const p of NN.X.concat(NN.Xte)) {
+    if (p[0] < xmin) xmin = p[0]; if (p[0] > xmax) xmax = p[0];
+    if (p[1] < ymin) ymin = p[1]; if (p[1] > ymax) ymax = p[1];
+  }
+  const padX = (xmax - xmin) * 0.15 + 0.1;
+  const padY = (ymax - ymin) * 0.15 + 0.1;
+  return [xmin - padX, xmax + padX, ymin - padY, ymax + padY];
+}
+
+function nnRenderDecision() {
+  const el = $('nn-decision');
+  clearSVG(el);
+  const W = 400, H = 400;
+  const [xmin, xmax, ymin, ymax] = nnDataBounds();
+  const xToPx = x => ((x - xmin) / (xmax - xmin)) * W;
+  const yToPx = y => H - ((y - ymin) / (ymax - ymin)) * H;
+
+  // Decision boundary heatmap (50x50 grid)
+  const G = 50;
+  const cellW = W / G, cellH = H / G;
+  for (let i = 0; i < G; i++) {
+    for (let j = 0; j < G; j++) {
+      const x = xmin + ((i + 0.5) / G) * (xmax - xmin);
+      const y = ymin + (1 - (j + 0.5) / G) * (ymax - ymin);
+      const { probs } = nnForward([x, y]);
+      let pred = 0;
+      for (let c = 1; c < NN_NCLASS; c++) if (probs[c] > probs[pred]) pred = c;
+      // Confidence shade
+      const conf = probs[pred];
+      const opacity = 0.35 + 0.45 * (conf - 1 / NN_NCLASS) / (1 - 1 / NN_NCLASS);
+      el.appendChild(svg('rect', {
+        x: i * cellW, y: j * cellH, width: cellW + 0.5, height: cellH + 0.5,
+        fill: NN_CLASS_COLORS[pred], opacity: Math.max(0.18, Math.min(opacity, 0.55))
+      }));
+    }
+  }
+
+  // Training points (filled)
+  for (let i = 0; i < NN.X.length; i++) {
+    el.appendChild(svg('circle', {
+      cx: xToPx(NN.X[i][0]), cy: yToPx(NN.X[i][1]), r: 3.5,
+      fill: NN_CLASS_COLORS[NN.Y[i]], stroke: '#0a0e1a', 'stroke-width': 0.6
+    }));
+  }
+  // Test points (white-rimmed)
+  for (let i = 0; i < NN.Xte.length; i++) {
+    el.appendChild(svg('circle', {
+      cx: xToPx(NN.Xte[i][0]), cy: yToPx(NN.Xte[i][1]), r: 3.5,
+      fill: NN_CLASS_COLORS[NN.Yte[i]], stroke: '#fff', 'stroke-width': 1.2
+    }));
+  }
+}
+
+function nnRenderLosses() {
+  const el = $('nn-losses');
+  clearSVG(el);
+  const W = 400, H = 280, pad = 36;
+  el.appendChild(svg('rect', { x: pad, y: pad, width: W - 2 * pad, height: H - 2 * pad, fill: 'none', stroke: '#243048', 'stroke-width': 1 }));
+  if (NN.trainHist.length < 2) {
+    const t = svg('text', { x: W/2, y: H/2, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '11', 'text-anchor': 'middle' });
+    t.textContent = 'Press Train to start';
+    el.appendChild(t);
+    return;
+  }
+  const all = NN.trainHist.concat(NN.testHist);
+  const maxL = Math.max(...all);
+  const minL = Math.min(...all);
+  const range = maxL - minL + 1e-6;
+  const xToPx = i => pad + (i / Math.max(NN.trainHist.length - 1, 1)) * (W - 2 * pad);
+  const yToPx = v => (H - pad) - ((v - minL) / range) * (H - 2 * pad);
+
+  // Train loss
+  let pTr = '';
+  NN.trainHist.forEach((v, i) => { pTr += (i === 0 ? 'M' : 'L') + xToPx(i) + ',' + yToPx(v) + ' '; });
+  el.appendChild(svg('path', { d: pTr, stroke: '#4ecca3', 'stroke-width': 2, fill: 'none' }));
+
+  // Test loss
+  let pTe = '';
+  NN.testHist.forEach((v, i) => { pTe += (i === 0 ? 'M' : 'L') + xToPx(i) + ',' + yToPx(v) + ' '; });
+  el.appendChild(svg('path', { d: pTe, stroke: '#f0a500', 'stroke-width': 2, fill: 'none', 'stroke-dasharray': '5,3' }));
+
+  // Labels
+  const minL_lab = svg('text', { x: pad - 4, y: H - pad + 4, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'end' });
+  minL_lab.textContent = fmt(minL, 3); el.appendChild(minL_lab);
+  const maxL_lab = svg('text', { x: pad - 4, y: pad + 4, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'end' });
+  maxL_lab.textContent = fmt(maxL, 3); el.appendChild(maxL_lab);
+  const xL = svg('text', { x: W/2, y: H - 8, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'middle' });
+  xL.textContent = 'epoch'; el.appendChild(xL);
+  const yL = svg('text', { x: 12, y: H/2, fill: '#5a6b88', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'middle', transform: `rotate(-90 12 ${H/2})` });
+  yL.textContent = 'cross-entropy loss'; el.appendChild(yL);
+}
+
+function nnRenderConfusion() {
+  const cm = nnConfusion(NN.Xte, NN.Yte);
+  const grid = $('nn-cm');
+  grid.innerHTML = '';
+  // Header row: '' / actual 0 / actual 1 / actual 2
+  grid.appendChild(_cmCell('', 'head'));
+  for (let c = 0; c < NN_NCLASS; c++) {
+    const h = _cmCell(`act ${c}`, 'head');
+    h.style.color = NN_CLASS_COLORS[c];
+    grid.appendChild(h);
+  }
+  // Rows: pred 0, pred 1, pred 2
+  for (let p = 0; p < NN_NCLASS; p++) {
+    const lab = _cmCell(`pred ${p}`, 'head');
+    lab.style.color = NN_CLASS_COLORS[p];
+    lab.style.textAlign = 'right';
+    grid.appendChild(lab);
+    for (let a = 0; a < NN_NCLASS; a++) {
+      const cell = _cmCell(cm[p][a], p === a ? 'diag' : 'off');
+      grid.appendChild(cell);
+    }
+  }
+}
+function _cmCell(text, cls) {
+  const d = document.createElement('div');
+  d.className = 'cm-cell ' + cls;
+  d.textContent = text;
+  return d;
+}
+
+function nnRenderArch() {
+  const el = $('nn-arch');
+  clearSVG(el);
+  const W = 400, H = 220;
+  const layers = [2, NN.W1.length, 3];
+  const lx = [60, 200, 340];
+  const layerLabels = ['input', `hidden (${NN.act})`, 'output (softmax)'];
+
+  // Connection lines (hidden layer can be big — skip if H>16 for clarity but still draw partially)
+  for (let i = 0; i < 2; i++) {
+    const n1 = layers[i], n2 = layers[i + 1];
+    const ys1 = layoutY(n1, H, 24);
+    const ys2 = layoutY(n2, H, 24);
+    for (let a = 0; a < n1; a++) {
+      for (let b = 0; b < n2; b++) {
+        // Color the connections by approximate weight magnitude (W1 or W2)
+        let w = 0;
+        if (i === 0) w = NN.W1 ? NN.W1[b][a] : 0;
+        else w = NN.W2 ? NN.W2[b][a] : 0;
+        const opacity = clamp(Math.abs(w) * 0.35 + 0.05, 0.05, 0.5);
+        const color = w >= 0 ? '#4ecca3' : '#ec4899';
+        el.appendChild(svg('line', {
+          x1: lx[i], y1: ys1[a], x2: lx[i + 1], y2: ys2[b],
+          stroke: color, 'stroke-width': clamp(Math.abs(w) * 0.4 + 0.3, 0.4, 1.5),
+          opacity
+        }));
+      }
+    }
+  }
+  // Nodes
+  for (let i = 0; i < 3; i++) {
+    const ys = layoutY(layers[i], H, 24);
+    for (let j = 0; j < layers[i]; j++) {
+      el.appendChild(svg('circle', {
+        cx: lx[i], cy: ys[j], r: 7,
+        fill: i === 0 ? '#a5b4fc' : (i === 1 ? '#5eead4' : NN_CLASS_COLORS[j]),
+        stroke: '#0a0e1a', 'stroke-width': 1.2
+      }));
+    }
+    const lab = svg('text', { x: lx[i], y: H - 6, fill: '#7a8ba8', 'font-family': 'IBM Plex Mono, monospace', 'font-size': '9', 'text-anchor': 'middle' });
+    lab.textContent = layerLabels[i] + ` (${layers[i]})`;
+    el.appendChild(lab);
+  }
+  $('nn-arch-info').textContent = `2 inputs → ${NN.H} hidden (${NN.act}) → 3 classes (softmax)`;
+}
+function layoutY(n, H, pad) {
+  if (n === 1) return [H / 2];
+  const ys = [];
+  const top = pad, bot = H - pad - 14;
+  for (let i = 0; i < n; i++) ys.push(top + (i / (n - 1)) * (bot - top));
+  return ys;
+}
+
+function nnRenderAll() {
+  nnRenderDecision();
+  nnRenderLosses();
+  nnRenderConfusion();
+  nnRenderArch();
+}
+
+// ─── controls ───
+$('nn-h').addEventListener('input', e => {
+  NN.H = +e.target.value;
+  $('nn-h-val').textContent = NN.H;
+  // Re-init weights (don't reset data)
+  nnInitParams(NN.H);
+  NN.trainHist = []; NN.testHist = []; NN.currentEpoch = 0;
+  $('nn-epoch-shown').textContent = 'Epoch: 0';
+  nnRenderAll();
+});
+$('nn-act').addEventListener('change', e => {
+  NN.act = e.target.value;
+  nnInitParams(NN.H);
+  NN.trainHist = []; NN.testHist = []; NN.currentEpoch = 0;
+  $('nn-epoch-shown').textContent = 'Epoch: 0';
+  nnRenderAll();
+});
+$('nn-lr').addEventListener('input', e => {
+  NN.lr = Math.pow(10, parseFloat(e.target.value));
+  $('nn-lr-val').textContent = NN.lr.toFixed(NN.lr < 0.01 ? 4 : 3);
+});
+$('nn-epochs').addEventListener('input', e => {
+  NN.epochs = +e.target.value;
+  $('nn-epochs-val').textContent = NN.epochs;
+});
+$('nn-data').addEventListener('change', e => {
+  NN.dataKind = e.target.value;
+  nnReset();
+});
+$('nn-train').addEventListener('click', nnTrain);
+$('nn-reset').addEventListener('click', nnReset);
+
+NN.lr = Math.pow(10, parseFloat($('nn-lr').value));
+$('nn-lr-val').textContent = NN.lr.toFixed(3);
+NN.epochs = +$('nn-epochs').value;
+NN.H = +$('nn-h').value;
+nnReset();
+
+})();</script>
+</body>
+</html>
